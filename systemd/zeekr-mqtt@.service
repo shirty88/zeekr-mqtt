@@ -5,8 +5,8 @@ After=network.target mosquitto.service
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/zeekr-mqtt
-User=transport
-Group=transport
+User=transport-mqtt
+Group=transport-mqtt
 
 # The %i dynamically forwards the instance name ('long' or 'fast') to Python
 ExecStart=/opt/zeekr-mqtt/venv-zeekr-ev-api/bin/python3 /opt/zeekr-mqtt/zeekr-mqtt.py --trigger %i

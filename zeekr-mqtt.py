@@ -8,7 +8,6 @@ from zeekr_ev_api.client import ZeekrClient
 
 # --- Configuration & Secrets Loading ---
 SECRETS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "zeekr_secrets.json")
-EVCC_VEHICLE_NAME = "ZEEKR7x"  # Match the exact 'name:' assigned in evcc.yaml
 
 def load_secrets(filepath):
     """Loads Zeekr API and MQTT secrets from a JSON file."""
@@ -38,17 +37,22 @@ def main():
     parser.add_argument("--trigger", type=str, default="manual", help="The identifier of the triggering systemd instance")
     args = parser.parse_args()
 
-    # Pre-execution check for fast charging schedule
-    if args.trigger == "fast":
-        if not is_evcc_charging(EVCC_VEHICLE_NAME):
-            print(f"Trigger is '{args.trigger}' but {EVCC_VEHICLE_NAME} is not actively charging. Exiting smoothly.")
-            return
-
     try:
         secrets = load_secrets(SECRETS_FILE)
     except Exception as e:
         print(f"Failed to load secrets: {e}")
         sys.exit(1)
+
+    evcc_vehicle_name = secrets.get("evcc_vehicle", [])
+
+    # 2. Pre-execution check for fast charging schedule
+    if args.trigger == "fast":
+        if not evcc_vehicle_name:
+            print(f"Trigger is '{args.trigger}' but evcc_vehicle_name is not defined in secrets. Exiting smoothly.")
+            return
+        if not is_evcc_charging(evcc_vehicle_name):
+            print(f"Trigger is '{args.trigger}' but {evcc_vehicle_name} is not actively charging. Exiting smoothly.")
+            return
 
     # Extract credentials and endpoints
     zeekr_username = secrets.get("zeekr_username")
@@ -102,10 +106,11 @@ def main():
         # Extract target nested nodes safely
         basic_status = stats.get("basicVehicleStatus", {})
         add_status = stats.get("additionalVehicleStatus", {})
-        electric_status = add_status.get("electricVehicleStatus", {}) # Extracted energy node
-        maintenance_status = add_status.get("maintenanceStatus", {}) # Extracted and edited status node
-        position_status = basic_status.get("position", {}) # Extracted location node
-        climate_status = add_status.get("climateStatus", {}) # Extracted climate node
+        
+        electric_status = add_status.get("electricVehicleStatus", {})
+        maintenance_status = add_status.get("maintenanceStatus", {})
+        position_status = basic_status.get("position", {})
+        climate_status = add_status.get("climateStatus", {})
 
         # Compile data payloads
         charging_payload = electric_status
