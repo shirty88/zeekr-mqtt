@@ -23,7 +23,7 @@ def is_evcc_charging(vehicle_name):
         req = urllib.request.Request("http://127.0.0.1:7070/api/state")
         with urllib.request.urlopen(req, timeout=2) as response:
             data = json.loads(response.read().decode())
-            for lp in data.get('result', {}).get('loadpoints', []):
+            for lp in data.get('loadpoints', []):
                 if lp.get('vehicleName') == vehicle_name:
                     return lp.get('charging', False)
     except Exception as e:

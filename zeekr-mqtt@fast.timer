@@ -3,7 +3,7 @@ Description=Fast Charging Timer for ZEEKR Bridge
 
 [Timer]
 OnCalendar=*:0/10
-RandomizedDelaySec=60
+RandomizedDelaySec=240
 Persistent=true
 
 [Install]
