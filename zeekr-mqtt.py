@@ -102,14 +102,15 @@ def main():
         # Extract target nested nodes safely
         basic_status = stats.get("basicVehicleStatus", {})
         add_status = stats.get("additionalVehicleStatus", {})
-        
-        electric_status = add_status.get("electricVehicleStatus", {})
-        maintenance_status = add_status.get("maintenanceStatus", {})
-        position_status = basic_status.get("position", {})
+        electric_status = add_status.get("electricVehicleStatus", {}) # Extracted energy node
+        maintenance_status = add_status.get("maintenanceStatus", {}) # Extracted and edited status node
+        position_status = basic_status.get("position", {}) # Extracted location node
+        climate_status = add_status.get("climateStatus", {}) # Extracted climate node
 
         # Compile data payloads
         charging_payload = electric_status
         location_payload = position_status
+        climate_payload = climate_status 
         status_payload = {}
         
         for k, v in basic_status.items():
@@ -126,9 +127,11 @@ def main():
         if charging_payload:
             msgs.append({'topic': f"{base_topic}/charging", 'payload': json.dumps(charging_payload), 'retain': False})
         if status_payload:
-            msgs.append({'topic': f"{base_topic}/status", 'payload': json.dumps(status_payload), 'retain': False})
+            msgs.append({'topic': f"{base_topic}/state", 'payload': json.dumps(status_payload), 'retain': False})
         if location_payload:
             msgs.append({'topic': f"{base_topic}/location", 'payload': json.dumps(location_payload), 'retain': False})
+        if climate_payload:
+            msgs.append({'topic': f"{base_topic}/climate", 'payload': json.dumps(climate_payload), 'retain': False})
 
         print(f"Publishing messages to MQTT broker at {mqtt_broker}...")
         publish.multiple(msgs, hostname=mqtt_broker, port=mqtt_port, auth=mqtt_auth)
