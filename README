@@ -158,7 +158,6 @@ Once the broker is broadcasting data, the following evcc yaml configuration for 
       source: mqtt
       topic: transport/[vin here]/state            # Amend [ vin here ] to match the vin that is used as a topic ID 
       jq: .odometer
-    timeout: 18000
 ```
 
 
