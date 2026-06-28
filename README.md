@@ -1,11 +1,11 @@
 # Zeekr MQTT Telemetry Bridge
-A Python bridge that extracts real-time vehicle telemetry from the Zeekr Cloud (zeekr_ev_api) and broadcasts it to a local MQTT broker for easy consumption in other applications. This has been written with EVCC and OpenHAB in mind given the availablity of a Home Assistant plugin already.
+A Python bridge that extracts real-time vehicle telemetry from the Zeekr Cloud (zeekr_ev_api) and broadcasts it to a local MQTT broker for easy consumption in other applications. This has been written with EVCC and OpenHAB in mind, given the availablity of a Home Assistant plugin already.
 
-This script features a "smart-polling" mechanism that dynamically adjusts its cloud API requests based on whether the vehicle is actively charging, protecting 12v battery level from repeated polling, API limits and API ban risk while providing more frequent real-time data when it matters most during charging.
+This script features a "smart-polling" mechanism that dynamically adjusts its cloud API requests based on whether the vehicle is actively charging, protecting the 12v battery level from repeated polling, API limits and API ban risk while providing more frequent real-time data when it matters most during charging.
 
 ## What it does
 * **API to MQTT Conversion:** Fetches raw, nested JSON data using zeekr_ev_api libraries and flattens it into clean, distinct MQTT topics (`/charging`, `/state`, `/location`, `/climate`).
-* **Smart Polling via EVCC charge check:** As presented polls the API in a 60 minute random window every 4 hours (long mode) and interrogates your local EVCC API for charging status and if the car is actively charging, it polls on a 4 minute randow window every 1 minutes to supplement EVCC estimates (fast mode). Long mode means if parked and idle, it drops to a deep-sleep polling interval to prevent battery drain and API rate-limiting.
+* **Smart Polling via EVCC charge check:** By default the long timer polls the API in a 60 minute random window every 4 hours (long mode). The fast timer interrogates your local EVCC API for charging status on a 4 minute randow window every 10 minutes, and if the car is actively charging it polls the API to supplement EVCC estimates. Long mode means if parked and idle, it drops to a deep-sleep polling interval to prevent battery drain and API rate-limiting.
 * **Systemd Integration:** Utilizes systemd parameterized services (`@`) and randomized timers to ensure reliable, background execution without process collisions based upon system timers.
 
 ## Use Cases
