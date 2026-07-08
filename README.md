@@ -1,34 +1,34 @@
 # Zeekr MQTT Telemetry Bridge
-A Python bridge that extracts real-time vehicle telemetry from the Zeekr Cloud (zeekr_ev_api) and broadcasts it to a local MQTT broker for easy consumption in other applications. This has been written with EVCC and OpenHAB in mind, given the availablity of a Home Assistant plugin already.
+A Python bridge that extracts vehicle telemetry from the Zeekr Cloud (zeekr_ev_api) and broadcasts it to a local MQTT broker for easy consumption in other software. This has been written with EVCC and OpenHAB in mind, given the availablity of a Home Assistant plugin already.
 
 This script features a "smart-polling" mechanism that dynamically adjusts its cloud API requests based on whether the vehicle is actively charging, protecting the 12v battery level from repeated polling, API limits and API ban risk while providing more frequent real-time data when it matters most during charging.
 
 ## What it does
-* **API to MQTT Conversion:** Fetches raw, nested JSON data using zeekr_ev_api libraries and flattens it into clean, distinct MQTT topics (`/charging`, `/state`, `/location`, `/climate`).
-* **Smart Polling via EVCC charge check:** By default the long timer polls the API in a 60 minute random window every 4 hours (long mode). The fast timer interrogates your local EVCC API for charging status on a 4 minute randow window every 10 minutes, and if the car is actively charging it polls the API to supplement EVCC estimates. Long mode means if parked and idle, it drops to a deep-sleep polling interval to prevent battery drain and API rate-limiting.
-* **Systemd Integration:** Utilizes systemd parameterized services (`@`) and randomized timers to ensure reliable, background execution without process collisions based upon system timers.
+* **API to MQTT Conversion:** Fetches raw, nested JSON data using the zeekr_ev_api libraries and flattens it into distinct MQTT topics (`/charging`, `/state`, `/location`, `/climate`).
+* **Smart Polling via EVCC charge check:** The long timer polls the zeekr API in a 60 minute random window every 4 hours. The fast timer interrogates a local EVCC API for charging status of the connected vehicle on a 4 minute randow window every 10 minutes, and if the vehicle is actively charging it polls the API to supplement EVCC estimates. Long mode means if the vehicle is parked and idle, the scripts drop to a deep-sleep style polling interval to prevent battery drain and API rate-limiting.
+* **Systemd Integration:** Utilizes systemd parameterized services (`@`) and randomised timers to ensure reliable, background execution on linux based upon system timers.
 
 ## Use Cases
 ### 1. EVCC Integration (Smart Charging)
 Feeds live battery and range data to a local instance of [EVCC](https://evcc.io/):
-* **State of Charge (SoC):** Provides EVCC vehicle SOC to enable advanced trip planning options (once vehicle is configured in EVCC using mqtt).
-* **Hardware Connection State:** Reads the physical IEC 61851 A/B/C states (via `statusOfChargerConnection`) so EVCC knows exactly when the car is plugged in, even before power flows.
+* **State of Charge (SoC):** Provides EVCC the vehicle state of charge to enable advanced trip planning options (once vehicle is configured in EVCC using mqtt as a data feed).
+* **Hardware Connection State:** Reads the physical IEC 61851 A/B/C states (via `statusOfChargerConnection`) so EVCC knows when the car is plugged in, even before power flows.
 
 ### 2. Home Automation (OpenHAB and other via MQTT)
 Provides a dataset for local smart home platform to trigger automations:
 * **Climate Control:** Read temperatures.
 * **Security:** Monitor door open/close status, central locking, and parking brake engagement.
 * **Maintenance:** Track 12V battery health, tyre pressures, and tyre temperatures.
-* **Location:** Geofence your vehicle using GPS coordinates to trigger "Welcome Home" routines.
+* **Location:** Track vehicle location using GPS coordinates.
 
 ## Dependencies
-* **OS:** This was built on Ubuntu using python 3.8+ in a specific venv created in /opt 
-* **Libraries:** `paho-mqtt`, `zeekr_ev_api` (Geely API wrapper already operating and configured) are installed and enabled in the python venv
-* **Infrastructure:** Assumes a local MQTT Broker (e.g., Mosquitto) and EVCC (running locally on port `7070`) are already established and operating on the same machine as the script.
+* **OS:** This was built on Ubuntu using python 3.8+ in a specific venv, created in /opt 
+* **Libraries:** `paho-mqtt`, `zeekr_ev_api` (must already installed operating and configured, including having the required secrets) are installed and enabled in the python venv
+* **Infrastructure:** Assumes a local MQTT Broker and EVCC (running locally on port `7070`) are already installed and operating on the same machine as the script.
 
 ## Installation & Implementation (Ubuntu)
 ### 1. Setup Ubuntu Environment
-It is recommended to run this service under a dedicated, unprivileged system user (e.g., `transport-mqtt`) and place the files in `/opt/zeekr-mqtt`. Instructions assume python3-venv is installed on the machine. Editor nano is used to make thinsg simple so install it. Instructions make the default directory permissive so the actve user can act without elevated privileges and must be secured at completion. 
+It is recommended to run this service under an unprivileged user (e.g., `transport-mqtt`) and place the files in `/opt/zeekr-mqtt`. Instructions assume python3-venv is installed on the machine. Editor nano is used to make editing simple. Instructions deliberately make the default directory permissive so the actve user can edit without elevated privileges and as a result this directory must be secured at completion. 
 
 #### Create a dedicated service user
 ```bash
@@ -84,8 +84,7 @@ The secrets file is in the format generated by zeekr_key_extractor with 8 additi
   "mqtt_pass": "   "
 }
 ```
-
-Use the vin element for single vehicles to reduce the number of API calls. Use the evcc_vehicle element to ensure the fast timer pulls data (more frequently is the purpose) when the vehicle is connected to evcc and actually charging.
+Use the vehicle VIN element to retreive data directly for a single vehicle, reducing the number of API calls. Use the evcc_vehicle element to identify the charged vehicle to support the fast timer pulls data (more frequently is the purpose) when the vehicle is connected to evcc and actually charging.
 
 ### 3. Finalise Ubuntu Environment and test
 #### Reset the ownership of the new directory and files
@@ -159,9 +158,3 @@ Once the broker is broadcasting data, the following evcc yaml configuration for 
       topic: transport/[vin here]/state            # Amend [ vin here ] to match the vin that is used as a topic ID 
       jq: .odometer
 ```
-
-
-
-
-## Notes
-Sorry but this written for me and these are notes for my setup and is shared as is to help others. Feel free to raise issues but honestly unless it is brokern for me it probably wont get fixed... and yes, AI helped build this. I work in finance, not IT so it is shocking I got this far.
