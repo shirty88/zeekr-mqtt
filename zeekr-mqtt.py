@@ -130,13 +130,13 @@ def main():
         msgs = []
 
         if charging_payload:
-            msgs.append({'topic': f"{base_topic}/charging", 'payload': json.dumps(charging_payload), 'retain': False})
+            msgs.append({'topic': f"{base_topic}/charging", 'payload': json.dumps(charging_payload), 'retain': True})
         if status_payload:
-            msgs.append({'topic': f"{base_topic}/state", 'payload': json.dumps(status_payload), 'retain': False})
+            msgs.append({'topic': f"{base_topic}/state", 'payload': json.dumps(status_payload), 'retain': True})
         if location_payload:
-            msgs.append({'topic': f"{base_topic}/location", 'payload': json.dumps(location_payload), 'retain': False})
+            msgs.append({'topic': f"{base_topic}/location", 'payload': json.dumps(location_payload), 'retain': True})
         if climate_payload:
-            msgs.append({'topic': f"{base_topic}/climate", 'payload': json.dumps(climate_payload), 'retain': False})
+            msgs.append({'topic': f"{base_topic}/climate", 'payload': json.dumps(climate_payload), 'retain': True})
 
         print(f"Publishing messages to MQTT broker at {mqtt_broker}...")
         publish.multiple(msgs, hostname=mqtt_broker, port=mqtt_port, auth=mqtt_auth)
